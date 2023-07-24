@@ -56,3 +56,49 @@ exports.getorder = async (req, res) => {
 		res.status(500).json({ error: 'Something went wrong!' });
 	}
 };
+
+exports.deleteorder = async (req, res) => {
+	try {
+		const userId = parseInt(req.params.userId);
+		const orderId = parseInt(req.params.orderId);
+
+		const orderQuery = 'SELECT * FROM orders WHERE id = $1 AND user_id = $2';
+		const orderResult = await pool.query(orderQuery, [orderId, userId]);
+		const order = orderResult.rows[0];
+
+		if (!order) {
+			return res.status(404).json({ error: 'Order not found!' });
+		}
+
+		const deleteQuery = 'DELETE FROM orders WHERE id = $1 AND user_id = $2';
+		await pool.query(deleteQuery, [orderId, userId]);
+
+		res.json({ message: 'Order deleted successfully!' });
+	} catch (error) {
+		res.status(500).json({ error: 'Something went wrong!' });
+	}
+};
+
+exports.deleteusers = async (req, res) => {
+	try {
+		const userId = parseInt(req.params.id);
+
+		const userQuery = 'SELECT * FROM users WHERE id = $1';
+		const userResult = await pool.query(userQuery, [userId]);
+		const user = userResult.rows[0];
+
+		if (!user) {
+			return res.status(404).json({ error: 'User not found!' });
+		}
+
+		const deleteOrderQuery = 'DELETE FROM orders WHERE user_id = $1';
+		await pool.query(deleteOrderQuery, [userId]);
+
+		const deleteUserQuery = 'DELETE FROM users WHERE id = $1';
+		await pool.query(deleteUserQuery, [userId]);
+
+		res.json({ message: 'User and associated orders deleted successfully!' });
+	} catch (error) {
+		res.status(500).json({ error: 'Something went wrong!' });
+	}
+};
